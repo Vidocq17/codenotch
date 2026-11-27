@@ -18,8 +18,8 @@ final class RunnerPaceTests: XCTestCase {
         XCTAssertEqual(RunnerPace.interval(busy: 7), RunnerPace.fastest, accuracy: 1e-9)
     }
 
-    func testEveryPullUpFrameIsATemplateImage() {
-        XCTAssertEqual(PullUpFrames.images.count, PullUpFrames.lifts.count)
-        XCTAssertTrue(PullUpFrames.images.allSatisfy { $0.isTemplate })
+    func testEveryDumbbellFrameIsATemplateImage() {
+        XCTAssertEqual(DumbbellFrames.images.count, DumbbellFrames.lifts.count)
+        XCTAssertTrue(DumbbellFrames.images.allSatisfy { $0.isTemplate })
     }
 }
