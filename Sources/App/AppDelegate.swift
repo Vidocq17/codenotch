@@ -17,6 +17,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Shows or takes away Codedock to match the preference, following the
     /// Claude sessions the monitors currently watch.
+    /// Shows or hides the runner's menu bar item to match the setting.
+    @MainActor private func setRunner(_ on: Bool) {
+        if on {
+            if runner == nil { runner = RunnerStatusItem() }
+            runner?.start()
+        } else {
+            runner?.stop()
+        }
+    }
+
     @MainActor private func applyCodedock() {
         guard !isRunningTests, preferences?.codedockEnabled == true, let fleet = notchFleet else {
             dockChat?.close()
@@ -39,7 +49,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Held for the life of the app: releasing it stops the scheduled checks.
     private var updater: Updater?
     private var thresholdNotifier: ThresholdNotifier?
-    private let runner = RunnerStatusItem()
+    /// Made on first use, on the main actor: the runner's item is AppKit's.
+    private var runner: RunnerStatusItem?
     private var resetWatcher: UsageResetWatcher?
     private var limitWatcher: UsageLimitWatcher?
     private var statusItem: StatusItemController?
@@ -148,11 +159,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .store(in: &cancellables)
 
         // Starts the runner at launch when it was left on, and follows the switch.
-        let runner = self.runner
         preferences.$showsRunner
             .removeDuplicates()
             .receive(on: RunLoop.main)
-            .sink { on in on ? runner.start() : runner.stop() }
+            .sink { [weak self] on in
+                Task { @MainActor in self?.setRunner(on) }
+            }
             .store(in: &cancellables)
 
         // `CODENOTCH_DEMO=1` puts the design frame's three providers and one
