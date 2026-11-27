@@ -1,6 +1,6 @@
 import AppKit
 
-/// How fast the runner moves: the busier the CPU, the quicker the strokes.
+/// How fast the dumbbell lifts: the busier the CPU, the quicker the strokes.
 enum RunnerPace {
     /// Seconds per frame at rest and at full load.
     static let slowest: TimeInterval = 0.9
@@ -13,10 +13,11 @@ enum RunnerPace {
     }
 }
 
-/// A person doing pull-ups, drawn in code as an 18pt template image. Frames
-/// follow one repetition: hanging, rising, at the top, lowering.
-enum PullUpFrames {
-    static let lifts: [CGFloat] = [0, 0.5, 1, 0.5]
+/// A dumbbell lifted and lowered, drawn in code as an 18pt template image. Its
+/// frames make one lift: down, rising, up, lowering. The plates are chunky
+/// enough to read at menu bar size, where a thin figure does not.
+enum DumbbellFrames {
+    static let lifts: [CGFloat] = [0, 1.5, 3, 1.5]
 
     /// Drawn once: the menu bar asks for the same four frames over and over.
     static let images: [NSImage] = lifts.map(image(lift:))
@@ -31,61 +32,29 @@ enum PullUpFrames {
         return image
     }
 
-    /// The pose is laid out top-down, as it reads on the page, and flipped to
-    /// AppKit's bottom-up space on the way out.
+    /// Laid out top-down, as it reads on the page, then flipped to AppKit's
+    /// bottom-up space by `rect`.
     private static func draw(lift: CGFloat) {
         NSColor.black.set()
 
-        let centre: CGFloat = 9
-        let barY: CGFloat = 2.5
-        let shoulderY = lerp(7.5, 5.0, lift)
-        let headY = shoulderY - 1.9
-        let hipY = shoulderY + 4.0
-        let elbowY = (shoulderY + barY) / 2
-        let elbowOut = lerp(1.6, 2.9, lift)
-
-        // The bar.
-        stroke([(2, barY), (16, barY)], width: 1.4)
-
-        // Head.
-        let head = NSBezierPath(ovalIn: NSRect(x: centre - 1.4, y: 18 - headY - 1.4,
-                                               width: 2.8, height: 2.8))
-        head.fill()
-
-        // Torso.
-        stroke([(centre, shoulderY + 0.5), (centre, hipY)], width: 1.7)
-
-        for side: CGFloat in [-1, 1] {
-            // Arms: shoulder, elbow, hand on the bar.
-            stroke([(centre + side * 1.0, shoulderY),
-                    (centre + side * elbowOut, elbowY),
-                    (centre + side * 4.0, barY)], width: 1.3)
-            // Legs: hip, bent knee, foot.
-            stroke([(centre, hipY),
-                    (centre + side * 1.4, hipY + lerp(2.8, 2.0, lift)),
-                    (centre + side * 0.6, hipY + lerp(5.4, 3.8, lift))], width: 1.3)
-        }
+        let middle: CGFloat = 9 - lift
+        plate(x: 1, middle: middle)
+        plate(x: 14, middle: middle)
+        NSBezierPath(rect: rect(x: 4, top: middle - 1, width: 10, height: 2)).fill()
     }
 
-    private static func stroke(_ points: [(CGFloat, CGFloat)], width: CGFloat) {
-        let path = NSBezierPath()
-        path.lineWidth = width
-        path.lineCapStyle = .round
-        path.lineJoinStyle = .round
-        for (index, point) in points.enumerated() {
-            let flipped = NSPoint(x: point.0, y: 18 - point.1)
-            if index == 0 { path.move(to: flipped) } else { path.line(to: flipped) }
-        }
-        path.stroke()
+    private static func plate(x: CGFloat, middle: CGFloat) {
+        NSBezierPath(roundedRect: rect(x: x, top: middle - 4, width: 3, height: 8),
+                     xRadius: 1, yRadius: 1).fill()
     }
 
-    private static func lerp(_ a: CGFloat, _ b: CGFloat, _ t: CGFloat) -> CGFloat {
-        a + (b - a) * t
+    private static func rect(x: CGFloat, top: CGFloat, width: CGFloat, height: CGFloat) -> NSRect {
+        NSRect(x: x, y: 18 - top - height, width: width, height: height)
     }
 }
 
-/// A second menu bar item holding the runner. It exists only while the runner
-/// is switched on, and never touches the main Codenotch item.
+/// A second menu bar item holding the dumbbell. It exists only while the
+/// setting is on, and never touches the main Codenotch item.
 @MainActor
 final class RunnerStatusItem {
     private var item: NSStatusItem?
@@ -97,7 +66,7 @@ final class RunnerStatusItem {
     func start() {
         guard task == nil else { return }
         let item = NSStatusBar.system.statusItem(withLength: 18)
-        item.button?.toolTip = L10n.t("Runner: faster when the CPU is busier")
+        item.button?.toolTip = L10n.t("Dumbbell: lifts faster when the CPU is busier")
         self.item = item
         previousTicks = SystemSampler.cpuTicks()
 
@@ -105,7 +74,7 @@ final class RunnerStatusItem {
             var frame = 0
             while !Task.isCancelled {
                 guard let self else { return }
-                let images = PullUpFrames.images
+                let images = DumbbellFrames.images
                 self.item?.button?.image = images[frame % images.count]
                 frame += 1
                 let interval = RunnerPace.interval(busy: self.busyShare())
