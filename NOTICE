@@ -1,0 +1,4 @@
+Codenotch includes runner artwork from RunCatNeo
+(https://github.com/runcat-dev/RunCatNeo), Copyright RunCat contributors,
+licensed under the Apache License, Version 2.0 (see LICENSE in that project).
+The running dog frames live in Sources/Assets.xcassets/runner-dog-0..4.imageset.

@@ -973,8 +973,8 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Toggle(L10n.t("Show the dumbbell in the menu bar"), isOn: $preferences.showsRunner)
-                Text(L10n.t("A dumbbell lifted beside the menu bar item, lifting faster the busier the CPU is."))
+                Toggle(L10n.t("Show the running dog in the menu bar"), isOn: $preferences.showsRunner)
+                Text(L10n.t("A dog running beside the menu bar item, running quicker while the CPU is calm and slower the busier it gets."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
